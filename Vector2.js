@@ -10,8 +10,15 @@ Vector2.prototype.set = function(x,y)
 	this.y = y;
 }
 
+//normalize x and y because if your calling on the vector as a function, 
+//at the end you need to 'reset' so that the next call is different.. i think 
+
+Vector2.prototype.normalize = function(x,y)
+{
+	
+}
+
 //todos
-// Normalize() im fairly certain this will = nothing 
 //add
 //subtract
 //multiplyScalar(num)
