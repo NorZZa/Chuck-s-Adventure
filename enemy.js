@@ -1,4 +1,4 @@
-var Player = function() 
+var Enemy = function() 
 {
 	this.image = document.createElement("img");
 	this.x = canvas.width/2;
@@ -8,7 +8,7 @@ var Player = function()
 	this.image.src = "rock_large.png";
 };
 
-Player.prototype.update = function(deltaTime)
+Enemy.prototype.update = function(deltaTime)
 {
 	if( typeof(this.rotation) == "undefined" )
 		this.rotation = 0; 							// hang on, where did this variable come from!
@@ -22,7 +22,7 @@ Player.prototype.update = function(deltaTime)
 	}
 }
 
-Player.prototype.draw = function()
+Enemy.prototype.draw = function()
 {
 	context.save();
 	context.translate(this.x, this.y);
