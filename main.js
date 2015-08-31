@@ -40,7 +40,7 @@ var fps = 0;
 var fpsCount = 0;
 var fpsTime = 0;
 
-//Maps Variables
+//Maps and layer Variables
 var LAYER_COUNT = 3;
 var MAP = {tw:60, th:15};
 var TILE = 35;
@@ -49,14 +49,73 @@ var TILESET_PADDING = 2;
 var TILESET_SPACING = 2;
 var TILESET_COUNT_X = 14;
 var TILESET_COUNT_Y = 14;
-
+var LAYER_COUNT = 3;
+var LAYER_BACKGROUND = 0;
+var LAYER_WATER = 1;
+var LAYER_PLATFORMS = 2;
+//object variables
 var player = new Player();
 var keyboard = new Keyboard();
 var enemy = new Enemy();
+var cells = [];
+//forces variables
+	// abitrary choice for 1m
+var METRE = TILE;
+	// very exaggerated gravity (6x)
+var GRAVITY = METRE * 9.8 *6;
+	// max horizontal speed (10 tiles per second)
+var MAXDX = METRE * 10;
+	// max vertical speed (15 tiles per second)
+var MAXDY = METRE * 15;
+	// horizontal acceleration - take 1/2 second to reach maxdx
+var ACCEL = MAXDX * 2;
+	// horizontal friction - take 1/6 second to stop from maxdx
+var FRICTION = MAXDX * 6;
+	// (a large) instantaneous jump impulse
+var JUMP = METRE * 1500;
 
 //Loading the level
 var tileset = document.createElement("img");
 tileset.src = "tileset.png";
+
+function cellAtPixelCoord(layer, x,y)
+{
+	if(x<0 || x>SCREEN_WIDTH || y<0)
+		return 1;
+	// let the player drop of the bottom of the screen (this means death)
+	if (y.SCREEN_HEIGHT)
+		return 0;
+	return cellAtTileCoord(layer, p2t(x), p2t(y));
+};
+
+function cellAtTileCoord(layer, tx, ty)
+{
+	if(tx<0 || tx>=MAP.tw || ty<0)
+		return 1;
+	// let the player drop of the bottom of the screen (this means death)
+	if(ty>=MAP.th)
+		return 0;
+	return cells[layer][ty][tx];
+};
+
+function tileToPixel(tile)
+{
+	return tile * TILE;
+};
+
+function pixelToTile(pixel)
+{
+	return Math.floor(pixel/TILE);
+};
+
+function bound(value, min, max)
+{
+	if(value < min)
+		return min;
+	if(value > max)
+		return max;
+	return value;
+}
 
 function drawMap()
 {
@@ -82,6 +141,38 @@ function drawMap()
 	}
 }
 
+//Initialize the collision map
+function initialize()
+{
+	for(var layerIdx = 0; layerIdx < LAYER_COUNT; layerIdx++)
+	{
+		cells[layerIdx] = [];
+		var idx = 0;
+		for(var y = 0; y < level1.layers[layerIdx].height; y++)
+		{
+			cells[layerIdx][y] = [];
+			for(var x = 0; x < level1.layers[layerIdx].width; x++)
+			{
+				if(level1.layers[layerIdx].data[idx] !=0)
+				{
+					// for each tile we find in the layer data, we need to create 4 collisions
+					// (because our collision squares are 35x35 but the tile in the level are 70x70)
+					cells[layerIdx][y][x] = 1;
+					cells[layerIdx][y-1][x] = 1;
+					cells[layerIdx][y-1][x+1] = 1;
+					cells[layerIdx][y][x+1] = 1;
+				}
+				else if(cells[layerIdx][y][x] != 1)
+				{
+					// if we haven't set this cell's value, then set it to 0 now
+					cells[layerIdx][y][x] = 0;
+				}
+				idx++;
+			}
+		}
+	}
+}
+
 function run()
 {
 	context.fillStyle = "#ccc";		
@@ -89,8 +180,8 @@ function run()
 	
 	var deltaTime = getDeltaTime();
 	
-	drawMap()
 	player.update(deltaTime);
+	drawMap()
 	player.draw();	
 		
 	// update the frame counter 
@@ -109,7 +200,7 @@ function run()
 	context.fillText("FPS: " + fps, 5, 20, 100);
 }
 
-
+initialize();
 //-------------------- Don't modify anything below here
 
 
