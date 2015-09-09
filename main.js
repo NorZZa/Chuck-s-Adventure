@@ -54,25 +54,25 @@ var LAYER_BACKGROUND = 0;
 var LAYER_WATER = 1;
 var LAYER_PLATFORMS = 2;
 //object variables
-var player = new Player();
 var keyboard = new Keyboard();
+var player = new Player();
 var enemy = new Enemy();
 var cells = [];
 //forces variables
 	// abitrary choice for 1m
-var METRE = TILE;
+var METER = TILE;
 	// very exaggerated gravity (6x)
-var GRAVITY = METRE * 9.8 *6;
+var GRAVITY = METER * 9.8 *6;
 	// max horizontal speed (10 tiles per second)
-var MAXDX = METRE * 10;
+var MAXDX = METER * 10;
 	// max vertical speed (15 tiles per second)
-var MAXDY = METRE * 15;
+var MAXDY = METER * 15;
 	// horizontal acceleration - take 1/2 second to reach maxdx
 var ACCEL = MAXDX * 2;
 	// horizontal friction - take 1/6 second to stop from maxdx
 var FRICTION = MAXDX * 6;
 	// (a large) instantaneous jump impulse
-var JUMP = METRE * 1500;
+var JUMP = METER * 1500;
 
 //Loading the level
 var tileset = document.createElement("img");
