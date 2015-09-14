@@ -1,4 +1,4 @@
-var Enemy = function() 
+/*//var Enemy = function() 
 {
 	this.image = document.createElement("img");
 	this.x = canvas.width/2;

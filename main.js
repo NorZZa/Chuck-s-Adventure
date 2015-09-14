@@ -27,7 +27,7 @@ function getDeltaTime()
 	return deltaTime;
 }
 
-//-------------------- Don't modify anything above here
+//-------------------- Don't modify anything above here-------------------------\\
 
 var SCREEN_WIDTH = canvas.width;
 var SCREEN_HEIGHT = canvas.height;
@@ -39,6 +39,8 @@ var SCREEN_HEIGHT = canvas.height;
 var fps = 0;
 var fpsCount = 0;
 var fpsTime = 0;
+var score = 0;
+var lives = 3;
 
 //Maps and layer Variables
 var LAYER_COUNT = 3;
@@ -51,28 +53,28 @@ var TILESET_COUNT_X = 14;
 var TILESET_COUNT_Y = 14;
 var LAYER_COUNT = 3;
 var LAYER_BACKGROUND = 0;
-var LAYER_WATER = 1;
-var LAYER_PLATFORMS = 2;
+var LAYER_PLATFORMS = 1;
+var LAYER_LADDERS = 2;
+//used in function drawmap()
+var worldOffsetX = 0;
 //object variables
 var keyboard = new Keyboard();
 var player = new Player();
-var enemy = new Enemy();
 var cells = [];
 //forces variables
-	// abitrary choice for 1m
 var METER = TILE;
-	// very exaggerated gravity (6x)
 var GRAVITY = METER * 9.8 *6;
-	// max horizontal speed (10 tiles per second)
 var MAXDX = METER * 10;
-	// max vertical speed (15 tiles per second)
 var MAXDY = METER * 15;
-	// horizontal acceleration - take 1/2 second to reach maxdx
 var ACCEL = MAXDX * 2;
-	// horizontal friction - take 1/6 second to stop from maxdx
 var FRICTION = MAXDX * 6;
-	// (a large) instantaneous jump impulse
-var JUMP = METER * 1500;
+var JUMP = METER * 2000;
+//Music Variables
+var musicBackground;
+var sfxFire;
+
+var heartimage = document.createElement("img");
+heartimage.src = "heartimage.png";
 
 //Loading the level
 var tileset = document.createElement("img");
@@ -119,21 +121,54 @@ function bound(value, min, max)
 
 function drawMap()
 {
-	for(var layerIdx=0; layerIdx<LAYER_COUNT; layerIdx++)
+	//score - needs work tho *************************
+	context.fillStyle = "yellow";
+	context.font="32px Arial";
+	var scoreText = "score: " + score;
+	context.fillText(scoreText, SCREEN_WIDTH - 170,35);
+	
+	for(var i=0; i<lives; i++)
 	{
-		var idx = 0;
-		for( var y = 0; y < level1.layers[layerIdx].height; y++ )
+		context.drawImage(heartImage, 20 + ((heartImage.width+2)*i), 10);
+	}
+	
+	var startX = -1;
+	var maxTiles = Math.floor(SCREEN_WIDTH / TILE) + 2;
+	var tileX = pixelToTile(player.position.x);
+	var offsetX = TILE + Math.floor(player.position.x%TILE);
+	
+	startX = tileX - Math.floor(maxTiles / 2);
+	
+	if(startX < 1)
+	{
+		startX = 0;
+		offsetX = 0;
+	}
+	if(startX > MAP.tw - maxTiles)
+	{
+		startX = MAP.tw - maxTiles + 1;
+		offsetX = TILE;
+	}
+	
+	worldOffsetX = startX * TILE + offsetX;
+
+	
+	for( var layerIdx=0; layerIdx < LAYER_COUNT; layerIdx++ )
+	{
+		for( var y = 0; y < level1.layers[layerIdx].height; y++ ) 
 		{
-			for( var x = 0; x < level1.layers[layerIdx].width; x++ )
+			var idx = y * level1.layers[layerIdx].width + startX;
+			for( var x = startX; x < startX + maxTiles; x++ )
 			{
 			if( level1.layers[layerIdx].data[idx] != 0 )
 			{
+
 				// the tiles in the Tiled map are base 1 (meaning a value of 0 means no tile), so subtract one from the tileset id to get the
 				// correct tile
 				var tileIndex = level1.layers[layerIdx].data[idx] - 1;
 				var sx = TILESET_PADDING + (tileIndex % TILESET_COUNT_X) * (TILESET_TILE + TILESET_SPACING);
 				var sy = TILESET_PADDING + (Math.floor(tileIndex / TILESET_COUNT_Y)) * (TILESET_TILE + TILESET_SPACING);
-				context.drawImage(tileset, sx, sy, TILESET_TILE, TILESET_TILE, x*TILE, (y-1)*TILE, TILESET_TILE, TILESET_TILE);
+				context.drawImage(tileset, sx, sy, TILESET_TILE, TILESET_TILE, (x-startX)*TILE - offsetX, (y-1)*TILE, TILESET_TILE, TILESET_TILE);
 			}
 			idx++;
 			}
@@ -171,6 +206,25 @@ function initialize()
 			}
 		}
 	}
+	musicBackground = new Howl(
+	{
+		urls: ["background.ogg"],
+		loop: true,
+		buffer:true,
+		volume:0.2
+	});
+	musicBackground.play();
+	
+	sfxFire =  new Howl(
+	{
+		urls:["fireEffect.ogg"],
+		buffer: true,
+		volume: 0.5,
+		onend: function()
+		{
+			isSfxPlaying = false;
+		}
+	})
 }
 
 function run()
@@ -180,7 +234,7 @@ function run()
 	
 	var deltaTime = getDeltaTime();
 	
-	player.update(deltaTime);
+	player.update(deltaTime); // update the player before drawing the map
 	drawMap()
 	player.draw();	
 		
