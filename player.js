@@ -69,15 +69,13 @@ Player.prototype.update = function(deltaTime)
 	var left = false;
 	var right = false;
 	var jump = false;
-	
-	//fix this
 	var acceleration = new Vector2(0, 0);
 	var playerAccel = 5000;
 	var playerDrag = 11;
 	var playerGravity = TILE * 9.8 * 6;
 	var jumpForce = 55000;
 	
-	//check keypress events
+	//Key press events
 	if(keyboard.isKeyDown(keyboard.KEY_LEFT) == true)
 	{
 		left = true;
@@ -123,8 +121,17 @@ Player.prototype.update = function(deltaTime)
 	{
 		sfxFire.play();
 		this.cooldownTimer=0.3;
-		
-		//shoot a bullet
+		if(this.sprite.currentAnimation == ANIM_IDLE_LEFT)
+		{
+			if(this.sprite.currentAnimation != ANIM_SHOOT_LEFT && this.jumping == false)
+				this.sprite.setAnimation(ANIM_SHOOT_LEFT);
+		}
+		else if(this.sprite.currentAnimation == ANIM_IDLE_RIGHT)
+		{
+			if(this.sprite.currentAnimation != ANIM_SHOOT_RIGHT && this.jumping == false)
+				this.sprite.setAnimation(ANIM_SHOOT_RIGHT);
+		}
+			//shoot a bullet****************************************
 	}
 	var wasleft = this.velocity.x < 0;
 	var wasright = this.velocity.x > 0;

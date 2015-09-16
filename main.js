@@ -51,10 +51,11 @@ var TILESET_PADDING = 2;
 var TILESET_SPACING = 2;
 var TILESET_COUNT_X = 14;
 var TILESET_COUNT_Y = 14;
-var LAYER_COUNT = 3;
+var LAYER_COUNT = 4;
 var LAYER_BACKGROUND = 0;
 var LAYER_PLATFORMS = 1;
 var LAYER_LADDERS = 2;
+var LAYER_GEMS = 3;
 //used in function drawmap()
 var worldOffsetX = 0;
 //object variables
@@ -69,12 +70,31 @@ var MAXDY = METER * 15;
 var ACCEL = MAXDX * 2;
 var FRICTION = MAXDX * 6;
 var JUMP = METER * 2000;
+//Game state Variables
+var STATE_SPLASH = 0;
+var STATE_GAME = 1;
+var STATE_GAMEOVER = 2;
+var STATE_GAMEWIN = 3;
+var splashTimer = 300;
+var gameState = STATE_SPLASH;
 //Music Variables
 var musicBackground;
 var sfxFire;
 
-var heartimage = document.createElement("img");
-heartimage.src = "heartimage.png";
+var splash = {
+	image: document.createElement("img"),
+	x: SCREEN_WIDTH,
+	y: SCREEN_HEIGHT,
+	width: 640,
+	height: 480,
+}
+splash.image.src = "splash.png";
+
+var heart = document.createElement("img");
+heart.src = "heart.png";
+
+var gem = document.createElement("img");
+gem.src = "gem.png";
 
 //Loading the level
 var tileset = document.createElement("img");
@@ -121,17 +141,6 @@ function bound(value, min, max)
 
 function drawMap()
 {
-	//score - needs work tho *************************
-	context.fillStyle = "yellow";
-	context.font="32px Arial";
-	var scoreText = "score: " + score;
-	context.fillText(scoreText, SCREEN_WIDTH - 170,35);
-	
-	for(var i=0; i<lives; i++)
-	{
-		context.drawImage(heartImage, 20 + ((heartImage.width+2)*i), 10);
-	}
-	
 	var startX = -1;
 	var maxTiles = Math.floor(SCREEN_WIDTH / TILE) + 2;
 	var tileX = pixelToTile(player.position.x);
@@ -211,7 +220,8 @@ function initialize()
 		urls: ["background.ogg"],
 		loop: true,
 		buffer:true,
-		volume:0.2
+		//dont forget to turn back on **********************************************
+		volume:0.0
 	});
 	musicBackground.play();
 	
@@ -226,11 +236,49 @@ function initialize()
 		}
 	})
 }
+//------------------------------------------------------------Game Run Function-----------------------------------------------------------\\
 
-function run()
+function runGame()
 {
 	context.fillStyle = "#ccc";		
 	context.fillRect(0, 0, canvas.width, canvas.height);
+	
+	//score	
+	context.draw = gem;
+	context.drawImage(gem, SCREEN_WIDTH - 80,3)
+	
+	context.fillStyle = "black";
+	context.font="32px Arial";
+	var scoreText = " : " + score;
+	context.fillText(scoreText, SCREEN_WIDTH - 50,25);
+	
+	//Lives
+	context.draw = heart;	
+	if (lives == 3)
+	{
+		context.drawImage(heart, 6, 5)
+		context.drawImage(heart, 46, 5)
+		context.drawImage(heart, 86, 5)
+	};
+	
+	if (lives == 2)
+	{
+		context.drawImage(heart, 6, 5)
+		context.drawImage(heart, 46, 5)
+	};                    
+	                      
+	if (lives == 1)       
+	{                     
+		context.drawImage(heart, 6, 5)
+	};
+	
+	//fix this***********************************************************
+	if (player.position.y > 600 || player.position.x < 0)
+	{
+		player.position.y = 7 * TILE;
+		player.position.x = 11 * TILE;
+		lives --;
+	};
 	
 	var deltaTime = getDeltaTime();
 	
@@ -238,7 +286,7 @@ function run()
 	drawMap()
 	player.draw();	
 		
-	// update the frame counter 
+	//FPS
 	fpsTime += deltaTime;
 	fpsCount++;
 	if(fpsTime >= 1)
@@ -249,9 +297,56 @@ function run()
 	}		
 		
 	// draw the FPS
-	context.fillStyle = "#f00";
+	context.fillStyle = "black";
 	context.font="14px Arial";
-	context.fillText("FPS: " + fps, 5, 20, 100);
+	context.fillText("FPS: " + fps, 2, 470, 300);
+}
+
+function runSplash()
+{
+	if(splashTimer > 0)
+	{
+		splashTimer --
+	}
+	if(splashTimer <=300)
+	{
+		context.drawImage(splash.image, 1, 1)
+	}
+	
+	if(splashTimer <=0)
+	{
+		gameState = STATE_GAME;
+		return;
+	}
+}
+
+function runGameOver()
+{
+	
+}
+
+function runGameWin()
+{
+	
+}
+
+function run()
+{
+	switch(gameState)
+	{
+		case STATE_SPLASH:
+		runSplash();
+		break;
+		case STATE_GAME:
+		runGame();
+		break;
+		case STATE_GAMEOVER:
+		runGameOver();
+		break;
+		case STATE_GAMEWIN:
+		runGameWin();
+		break;
+	}
 }
 
 initialize();
