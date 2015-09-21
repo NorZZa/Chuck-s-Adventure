@@ -32,17 +32,13 @@ function getDeltaTime()
 var SCREEN_WIDTH = canvas.width;
 var SCREEN_HEIGHT = canvas.height;
 
-
-// some variables to calculate the Frames Per Second (FPS - this tells use
-// how fast our game is running, and allows us to make the game run at a 
-// constant speed)
+// FPS Variables
 var fps = 0;
 var fpsCount = 0;
 var fpsTime = 0;
 var score = 0;
 var lives = 3;
-
-//Maps and layer Variables
+// Maps and layer Variables
 var LAYER_COUNT = 3;
 var MAP = {tw:60, th:15};
 var TILE = 35;
@@ -51,18 +47,21 @@ var TILESET_PADDING = 2;
 var TILESET_SPACING = 2;
 var TILESET_COUNT_X = 14;
 var TILESET_COUNT_Y = 14;
-var LAYER_COUNT = 4;
 var LAYER_BACKGROUND = 0;
 var LAYER_PLATFORMS = 1;
 var LAYER_LADDERS = 2;
-var LAYER_GEMS = 3;
-//used in function drawmap()
+var LAYER_OBJECT_ENEMIES = 3;
+var LAYER_OBJECT_TRIGGERS = 4;
+//FIX GEMS ************************
+var LAYER_OBJECT_GEMS = 5;
 var worldOffsetX = 0;
-//object variables
+// Object variables
 var keyboard = new Keyboard();
 var player = new Player();
 var cells = [];
-//forces variables
+var enemies = [];
+var bullets = [];
+// Force variables
 var METER = TILE;
 var GRAVITY = METER * 9.8 *6;
 var MAXDX = METER * 10;
@@ -70,6 +69,8 @@ var MAXDY = METER * 15;
 var ACCEL = MAXDX * 2;
 var FRICTION = MAXDX * 6;
 var JUMP = METER * 2000;
+var ENEMY_MAXDX = METER * 5;
+var ENEMY_ACCEL = ENEMY_MAXDX * 2;
 //Game state Variables
 var STATE_SPLASH = 0;
 var STATE_GAME = 1;
@@ -93,6 +94,7 @@ splash.image.src = "splash.png";
 var heart = document.createElement("img");
 heart.src = "heart.png";
 
+//FIX GEMS ************************
 var gem = document.createElement("img");
 gem.src = "gem.png";
 
@@ -235,6 +237,34 @@ function initialize()
 			isSfxPlaying = false;
 		}
 	})
+	
+	//Enemies
+	idx = 0;
+	for(var y = 0; y < level1.layers[LAYER_OBJECT_ENEMIES].height; y++)
+	{
+		for(var x = 0; x < level1.layers[LAYER_OBJECT_ENEMIES].width; x++)
+		{
+			if(level1.layers[LAYER_OBJECT_ENEMIES].data[idx] != 0)
+			{
+				var px = tileToPixel(x);
+				var py = tileToPixel(y);
+				var e = new Enemy(px, py);
+				enemies.push(e);
+			}
+			idx++;
+		}
+	}
+}
+function intersects(x1, y1, w1, h1, x2, y2, w2, h2)
+{
+        if(y2 + h2 < y1 ||
+              x2 + w2 < x1 ||
+                  x2 > x1 + w1 ||
+                  y2 > y1 + h1)
+        {
+                return false;
+        }
+        return true;
 }
 //------------------------------------------------------------Game Run Function-----------------------------------------------------------\\
 
@@ -243,15 +273,40 @@ function runGame()
 	context.fillStyle = "#ccc";		
 	context.fillRect(0, 0, canvas.width, canvas.height);
 	
-	//score	
-	context.draw = gem;
-	context.drawImage(gem, SCREEN_WIDTH - 80,3)
+	var deltaTime = getDeltaTime();
 	
-	context.fillStyle = "black";
-	context.font="32px Arial";
-	var scoreText = " : " + score;
-	context.fillText(scoreText, SCREEN_WIDTH - 50,25);
+	player.update(deltaTime); // update the player before drawing the map
+	drawMap()
+	player.draw();	
+	for(var i=0; i<enemies.length; i++)
+	{
+		enemies[i].update(deltaTime);
+	}
+	for(var i=0; i<enemies.length; i++)
+	{
+		enemies[i].draw(deltaTime);
+	}
 	
+	var hit = false;
+	for(var i=0; i<bullets.length; i++)
+	{
+		bullets[i].update(deltaTime);
+		if(bullets[i].position.x - worldOffsetX < 0 || bullets[i].position.x - worldOffsetX > SCREEN_WIDTH)
+		{
+			hit = true;
+		}
+		
+		for(var j=0; j<enemies.length; j++)
+		{
+			if(intersects(bullets[i].position.x, bullets[i].position.y, TILE, TILE, enemies[j].position.x, enemies[j].position.y, TILE, TILE) == true)
+			{
+				enemies.splice(j, 1);
+				hit = true;
+				score += 1;
+				break;
+			}
+		}
+	}
 	//Lives
 	context.draw = heart;	
 	if (lives == 3)
@@ -272,6 +327,21 @@ function runGame()
 		context.drawImage(heart, 6, 5)
 	};
 	
+	for(var i=0; i<enemies.length; i++)
+	{
+		if(intersects(
+				player.position.x, player.position.y,
+				TILE, TILE,
+				enemies[i].position.x, enemies[i].position.y,
+				TILE, TILE) == true)
+				{
+					lives --;
+					player.position.y = 7 * TILE;
+					player.position.x = 11 * TILE;
+					break;
+				}
+	}
+	
 	//fix this***********************************************************
 	if (player.position.y > 600 || player.position.x < 0)
 	{
@@ -280,12 +350,6 @@ function runGame()
 		lives --;
 	};
 	
-	var deltaTime = getDeltaTime();
-	
-	player.update(deltaTime); // update the player before drawing the map
-	drawMap()
-	player.draw();	
-		
 	//FPS
 	fpsTime += deltaTime;
 	fpsCount++;
@@ -300,6 +364,16 @@ function runGame()
 	context.fillStyle = "black";
 	context.font="14px Arial";
 	context.fillText("FPS: " + fps, 2, 470, 300);
+	
+	//score	
+	context.draw = gem;
+	context.drawImage(gem, SCREEN_WIDTH - 80,3)
+	
+	context.fillStyle = "black";
+	context.font="32px Arial";
+	var scoreText = " = " + score;
+	context.fillText(scoreText, SCREEN_WIDTH - 50,25);
+	
 }
 
 function runSplash()

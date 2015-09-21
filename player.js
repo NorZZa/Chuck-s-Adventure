@@ -9,37 +9,38 @@
 	var ANIM_JUMP_RIGHT = 6;
 	var ANIM_WALK_RIGHT = 7;
 	var ANIM_SHOOT_RIGHT = 8;
-	//there is actually 9 animations fix this 
 	var ANIM_MAX = 9;
+	
+	var bullets = [];
 	
 var Player = function() 
 {
 	this.sprite = new Sprite("ChuckNorris.png");
-	// idle left
+	//ANIM_IDLE_LEFT
 	this.sprite.buildAnimation(12, 8, 165, 126, 0.05,
 		[0, 1 ,2, 3, 4, 5, 6, 7]);
-	//jump left
+	//ANIM_JUMP_LEFT
 	this.sprite.buildAnimation(12, 8, 165, 126, 0.05,
 		[8, 9, 10, 11, 12]);
-	//walk left
+	//ANIM_WALK_LEFT
 	this.sprite.buildAnimation(12, 8, 165, 126, 0.05,
 		[13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26]);
-	//shoot left
+	//ANIM_SHOOT_LEFT
 	this.sprite.buildAnimation(12, 8, 165, 126, 0.05,
         [27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40]);
-	//climb
+	//ANIM_CLIMB
 	this.sprite.buildAnimation(12, 8, 165, 126, 0.05,
         [41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51]);
-	//idle right
+	//ANIM_IDLE_RIGHT
 	this.sprite.buildAnimation(12, 8, 165, 126, 0.05,
 		[52, 53, 54, 55, 56, 57, 58, 59]);
-	//jump right
+	//ANIM_JUMP_RIGHT
 	this.sprite.buildAnimation(12, 8, 165, 126, 0.05,
 		[60, 61, 62, 63, 64,]);
-	//walk right
+	//ANIM_WALK_RIGHT
 	this.sprite.buildAnimation(12, 8, 165, 126, 0.05,
 		[65, 66, 67, 68, 69, 70, 71, 72, 73, 74, 75, 76, 77, 78]);
-	//shoot right
+	//ANIM_SHOOT_RIGHT
 	 this.sprite.buildAnimation(12, 8, 165, 126, 0.05,
         [79, 80, 81, 82, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92]);
 
@@ -119,20 +120,27 @@ Player.prototype.update = function(deltaTime)
 	}
 	if(keyboard.isKeyDown(keyboard.KEY_SPACE) == true && this.cooldownTimer <=0)
 	{
+		var	tempBullet = new Bullet((this.position.x), this.position.y);
 		sfxFire.play();
 		this.cooldownTimer=0.3;
 		if(this.sprite.currentAnimation == ANIM_IDLE_LEFT)
 		{
 			if(this.sprite.currentAnimation != ANIM_SHOOT_LEFT && this.jumping == false)
 				this.sprite.setAnimation(ANIM_SHOOT_LEFT);
+			tempBullet.velocity.x = -200;
+			tempBullet.position.x = player.position.x;
 		}
 		else if(this.sprite.currentAnimation == ANIM_IDLE_RIGHT)
 		{
 			if(this.sprite.currentAnimation != ANIM_SHOOT_RIGHT && this.jumping == false)
 				this.sprite.setAnimation(ANIM_SHOOT_RIGHT);
+			tempBullet.velocity.x = 200;
+			tempBullet.position.x = player.position.x;
 		}
-			//shoot a bullet****************************************
+			//shoot a bullet
+		bullets.push(tempBullet);		
 	}
+	
 	var wasleft = this.velocity.x < 0;
 	var wasright = this.velocity.x > 0;
 	var falling = this.falling;
