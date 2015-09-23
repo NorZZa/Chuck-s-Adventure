@@ -32,7 +32,7 @@ function getDeltaTime()
 var SCREEN_WIDTH = canvas.width;
 var SCREEN_HEIGHT = canvas.height;
 
-// FPS Variables
+// HUD Variables
 var fps = 0;
 var fpsCount = 0;
 var fpsTime = 0;
@@ -52,7 +52,6 @@ var LAYER_PLATFORMS = 1;
 var LAYER_LADDERS = 2;
 var LAYER_OBJECT_ENEMIES = 3;
 var LAYER_OBJECT_TRIGGERS = 4;
-//FIX GEMS ************************
 var LAYER_OBJECT_GEMS = 5;
 var worldOffsetX = 0;
 // Object variables
@@ -61,6 +60,7 @@ var player = new Player();
 var cells = [];
 var enemies = [];
 var bullets = [];
+var gems = [];
 // Force variables
 var METER = TILE;
 var GRAVITY = METER * 9.8 *6;
@@ -89,24 +89,39 @@ var splash = {
 	width: 640,
 	height: 480,
 }
-splash.image.src = "splash.png";
+	splash.image.src = "splash.png";
+
+var gameover = {
+	image: document.createElement("img"),
+	x: SCREEN_WIDTH,
+	y: SCREEN_HEIGHT,
+	width: 640,
+	height: 480,
+}
+	gameover.image.src = "gameover.png";
+
+var gamewin = {
+	image: document.createElement("img"),
+	x: SCREEN_WIDTH,
+	y: SCREEN_HEIGHT,
+	width: 640,
+	height: 480,
+}
+	gamewin.image.src = "gamewin.png";
 
 var heart = document.createElement("img");
-heart.src = "heart.png";
+	heart.src = "heart.png";
 
-//FIX GEMS ************************
 var gem = document.createElement("img");
-gem.src = "gem.png";
+	gem.src = "gem.png";
 
-//Loading the level
 var tileset = document.createElement("img");
-tileset.src = "tileset.png";
+	tileset.src = "tileset.png";
 
 function cellAtPixelCoord(layer, x,y)
 {
 	if(x<0 || x>SCREEN_WIDTH || y<0)
 		return 1;
-	// let the player drop of the bottom of the screen (this means death)
 	if (y.SCREEN_HEIGHT)
 		return 0;
 	return cellAtTileCoord(layer, p2t(x), p2t(y));
@@ -116,7 +131,6 @@ function cellAtTileCoord(layer, tx, ty)
 {
 	if(tx<0 || tx>=MAP.tw || ty<0)
 		return 1;
-	// let the player drop of the bottom of the screen (this means death)
 	if(ty>=MAP.th)
 		return 0;
 	return cells[layer][ty][tx];
@@ -222,8 +236,7 @@ function initialize()
 		urls: ["background.ogg"],
 		loop: true,
 		buffer:true,
-		//dont forget to turn back on **********************************************
-		volume:0.0
+		volume:0.1
 	});
 	musicBackground.play();
 	
@@ -254,7 +267,24 @@ function initialize()
 			idx++;
 		}
 	}
+	//Gems
+	idx = 0;
+	for(var y = 0; y < level1.layers[LAYER_OBJECT_GEMS].height; y++)
+	{
+		for(var x = 0; x < level1.layers[LAYER_OBJECT_GEMS].width; x++)
+		{
+			if(level1.layers[LAYER_OBJECT_GEMS].data[idx] != 0)
+			{
+				var px = tileToPixel(x);
+				var py = tileToPixel(y);
+				var e = new Gem(px, py);
+				gems.push(e);
+			}
+			idx++;
+		}
+	}
 }
+
 function intersects(x1, y1, w1, h1, x2, y2, w2, h2)
 {
         if(y2 + h2 < y1 ||
@@ -266,11 +296,11 @@ function intersects(x1, y1, w1, h1, x2, y2, w2, h2)
         }
         return true;
 }
-//------------------------------------------------------------Game Run Function-----------------------------------------------------------\\
+//----------------------------------------------Game Run Function--------------------------------------------------------\\
 
 function runGame()
 {
-	context.fillStyle = "#ccc";		
+	context.fillStyle = "green";		
 	context.fillRect(0, 0, canvas.width, canvas.height);
 	
 	var deltaTime = getDeltaTime();
@@ -278,6 +308,7 @@ function runGame()
 	player.update(deltaTime); // update the player before drawing the map
 	drawMap()
 	player.draw();	
+	//Drawing enemies
 	for(var i=0; i<enemies.length; i++)
 	{
 		enemies[i].update(deltaTime);
@@ -286,7 +317,21 @@ function runGame()
 	{
 		enemies[i].draw(deltaTime);
 	}
-	
+	//Drawing Bullet
+	for(var i=0; i<bullets.length; i++)
+	{
+		bullets[i].draw(deltaTime);
+	}
+	//Drawing Gems
+	for(var i=0; i<gems.length; i++)
+	{
+		gems[i].update(deltaTime);
+	}
+	for(var i=0; i<gems.length; i++)
+	{
+		gems[i].draw(deltaTime);
+	}
+	//Bullet Collisions
 	var hit = false;
 	for(var i=0; i<bullets.length; i++)
 	{
@@ -302,10 +347,38 @@ function runGame()
 			{
 				enemies.splice(j, 1);
 				hit = true;
-				score += 1;
 				break;
 			}
 		}
+	}
+	//Collision for player and enemy
+	for(var i=0; i<enemies.length; i++)
+	{
+		if(intersects(
+				player.position.x, player.position.y,
+				TILE, TILE,
+				enemies[i].position.x, enemies[i].position.y,
+				TILE, TILE) == true)
+				{
+					lives --;
+					player.position.y = 7 * TILE;
+					player.position.x = 11 * TILE;
+					break;
+				}
+	}
+	//Collision for player and gems
+	for(var i=0; i<gems.length; i++)
+	{
+		if(intersects(
+				player.position.x, player.position.y,
+				TILE, TILE,
+				gems[i].position.x, gems[i].position.y,
+				TILE, TILE) == true)
+				{
+					gems.splice(i, 1);
+					score += 1;
+					break;
+				}
 	}
 	//Lives
 	context.draw = heart;	
@@ -326,28 +399,23 @@ function runGame()
 	{                     
 		context.drawImage(heart, 6, 5)
 	};
-	
-	for(var i=0; i<enemies.length; i++)
+	if (lives == 0)
 	{
-		if(intersects(
-				player.position.x, player.position.y,
-				TILE, TILE,
-				enemies[i].position.x, enemies[i].position.y,
-				TILE, TILE) == true)
-				{
-					lives --;
-					player.position.y = 7 * TILE;
-					player.position.x = 11 * TILE;
-					break;
-				}
+		gameState = STATE_GAMEOVER;
+		return;
 	}
-	
-	//fix this***********************************************************
-	if (player.position.y > 600 || player.position.x < 0)
+	//If players falls off platforms, lose a life
+	if (player.position.y > 600 || player.position.x < -50)
 	{
 		player.position.y = 7 * TILE;
 		player.position.x = 11 * TILE;
 		lives --;
+	};
+	//If player reaches the end of map, winner
+	if(player.position.y > 650 || player.position.x > 2020)
+	{
+		gameState = STATE_GAMEWIN;
+		return;
 	};
 	
 	//FPS
@@ -372,7 +440,7 @@ function runGame()
 	context.fillStyle = "black";
 	context.font="32px Arial";
 	var scoreText = " = " + score;
-	context.fillText(scoreText, SCREEN_WIDTH - 50,25);
+	context.fillText(scoreText, SCREEN_WIDTH - 60,25);
 	
 }
 
@@ -396,12 +464,20 @@ function runSplash()
 
 function runGameOver()
 {
-	
+	context.drawImage(gameover.image, 1, 1)
 }
 
 function runGameWin()
 {
+	context.drawImage(gamewin.image, 1, 1)
 	
+	context.draw = gem;
+	context.drawImage(gem, SCREEN_WIDTH - 80,3)
+	
+	context.fillStyle = "black";
+	context.font="32px Arial";
+	var scoreText = " = " + score;
+	context.fillText(scoreText, SCREEN_WIDTH - 60,25);
 }
 
 function run()

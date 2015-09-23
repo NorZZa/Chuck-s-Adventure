@@ -74,9 +74,9 @@ Player.prototype.update = function(deltaTime)
 	var playerAccel = 5000;
 	var playerDrag = 11;
 	var playerGravity = TILE * 9.8 * 6;
-	var jumpForce = 55000;
+	var jumpForce = 600000;
 	
-	//Key press events
+	//Left
 	if(keyboard.isKeyDown(keyboard.KEY_LEFT) == true)
 	{
 		left = true;
@@ -84,6 +84,7 @@ Player.prototype.update = function(deltaTime)
 		if(this.sprite.currentAnimation != ANIM_WALK_LEFT && this.jumping == false)
 				this.sprite.setAnimation(ANIM_WALK_LEFT);
 	}
+	//Right
 	else if(keyboard.isKeyDown(keyboard.KEY_RIGHT) == true)
 	{
 		right = true;
@@ -107,6 +108,7 @@ Player.prototype.update = function(deltaTime)
 			}
 		}
 	}
+	//Jump
 	if(keyboard.isKeyDown(keyboard.KEY_UP) == true)
 	{
 		jump = true;
@@ -118,6 +120,7 @@ Player.prototype.update = function(deltaTime)
 	{
 		this.cooldownTimer -=deltaTime;
 	}
+	//Shoot
 	if(keyboard.isKeyDown(keyboard.KEY_SPACE) == true && this.cooldownTimer <=0)
 	{
 		var	tempBullet = new Bullet((this.position.x), this.position.y);
@@ -137,7 +140,6 @@ Player.prototype.update = function(deltaTime)
 			tempBullet.velocity.x = 200;
 			tempBullet.position.x = player.position.x;
 		}
-			//shoot a bullet
 		bullets.push(tempBullet);		
 	}
 	

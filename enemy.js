@@ -6,10 +6,7 @@ var Enemy = function(x, y)
 	
 	this.position = new Vector2();
 	this.position.set(x, y);
-	
-	this.width = 176;
-	this.height = 94;
-	
+		
 	this.velocity = new Vector2();
 	
 	this.moveRight = true;
@@ -29,19 +26,19 @@ Enemy.prototype.update = function(deltaTime)
 		var ddx = 0;
 		
 		var tx = pixelToTile(this.position.x);
-		var ty = pixelToTile(this.position.x);
-		var nx = (this.position.x)%TILE;
-		var ny = (this.position.y)%TILE;
+		var ty = pixelToTile(this.position.y);
+		var nx = (this.position.x)% TILE;
+		var ny = (this.position.y)% TILE;
 		var cell = cellAtTileCoord(LAYER_PLATFORMS, tx, ty);
 		var cellright = cellAtTileCoord(LAYER_PLATFORMS, tx + 1, ty);
 		var celldown = cellAtTileCoord(LAYER_PLATFORMS, tx, ty + 1);
 		var celldiag = cellAtTileCoord(LAYER_PLATFORMS, tx + 1, ty + 1);
-		
+		//Right
 		if(this.moveRight)
 		{
 			if(celldiag && !cellright)
 			{
-				dxx = dxx + ENEMY_ACCEL;	//Right
+				ddx = ddx + ENEMY_ACCEL;
 			}
 			else
 			{
@@ -50,16 +47,17 @@ Enemy.prototype.update = function(deltaTime)
 				this.pause = 0.5;
 			}		
 		}
+		//Left
 		if(!this.moveRight)
 		{
 			if(celldown && !cell)
 			{
-				dxx = dxx - ENEMY_ACCEL;	//Left
+				ddx = ddx - ENEMY_ACCEL;
 			}
 			else
 			{
 				this.velocity.x = 0;
-				this.moveRight = false;
+				this.moveRight = true;
 				this.pause = 0.5;
 			}
 		}
